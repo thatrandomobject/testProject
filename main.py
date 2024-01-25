@@ -1,26 +1,52 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+from selenium import webdriver
+from selenium.webdriver import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 2000)
 
+url = 'https://www.cvmarket.lt/'
+
+service = Service(ChromeDriverManager().install())
+service.start()
+
+driver = webdriver.Chrome(service=service)
+
 job_data = []
-for i in range(0, 200, 30):
-    url = f'https://www.cvmarket.lt/darbo-skelbimai?op=search&search%5Bjob_salary%5D=3&search%5Bcategories%5D%5B0%5D=8&search%5Bkeyword%5D=&ga_track=homepage&start={i}'
+driver.get(url)
 
-    response = requests.get(url)
-    # print(response)
 
-    soup = BeautifulSoup(response.content, 'html.parser')
-    # print(soup.prettify())
+
+# print(response)
+
+category_select_list = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+    (By.CSS_SELECTOR, '#search\[categories\]\[\]_Label')))
+category_select_list.click()
+category_select = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+    (By.CSS_SELECTOR, '#search\[categories\]\[\]_Dropdown > ul:nth-child(1) > li:nth-child(10)')))
+driver.execute_script('arguments[0].scrollIntoView();', category_select)
+time.sleep(3)
+category_select.click()
+apply = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+    (By.CSS_SELECTOR, '#search\[categories\]\[\]_Apply')))
+apply.click()
+search = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+    (By.CSS_SELECTOR, '#button_65b26ad061e98')))
+time.sleep(3)
+search.click()
+time.sleep(100)
+for _ in range(0, 5):
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
     ads = soup.find_all('article', {'data-component':'jobad'})
-
-
-
-
-
     for ad in ads:
         job_title = ad.find('h2', class_='xl:text-xl font-bold mt-2 hover:underline').text.strip()
         company = ad.find('span', class_='job-company mr-5').text.strip()
