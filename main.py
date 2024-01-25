@@ -39,11 +39,9 @@ category_select.click()
 apply = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
     (By.CSS_SELECTOR, '#search\[categories\]\[\]_Apply')))
 apply.click()
-search = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
-    (By.CSS_SELECTOR, '#button_65b26ad061e98')))
+search_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit'][data-component='button']")))
+search_button.click()
 time.sleep(3)
-search.click()
-time.sleep(100)
 for _ in range(0, 5):
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     ads = soup.find_all('article', {'data-component':'jobad'})
@@ -67,6 +65,7 @@ for _ in range(0, 5):
             salary_type = 'N/A'
         location = ad.find('span', class_='bg-blue-50 text-slate-500 py-1.5 px-3 font-bold text-sm rounded-full flex w-fit h-fit justify-center items-center space-x-1.5 cursor-defaults leading-4 location').text.strip()
         salary_period_data = ad.find('div', class_='inline-block mt-2.5 lg:mt-0 salary-block mr-5')
+        salary_period = 'Unkown'
         if salary_period_data:
             if 'mėn' in salary_period_data.text.strip():
                 salary_period = 'Mėnesinis'
@@ -84,6 +83,11 @@ for _ in range(0, 5):
             'Atlyginimo tipas2': salary_period,
             'Patalpinta': posted_when
         })
+
+    next_page = driver.find_element(By.XPATH, '/html/body/section/main/div/ul/li[8]/a')
+    driver.execute_script('arguments[0].scrollIntoView();', next_page)
+    time.sleep(2)
+    next_page.click()
 
 df = pd.DataFrame(job_data)
 df = df.drop_duplicates()
